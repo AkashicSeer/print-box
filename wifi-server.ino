@@ -7,10 +7,6 @@ const char* password = "fuzzyrabbit916";  //Enter Password here
 
 ESP8266WebServer server(80);
 
-bool insideLed1Status = LOW;
-bool insideLed2Status = LOW;
-bool outsideLedStatus = LOW;
-bool boxHeater = LOW;
 IPAddress ipAddress;
 String setupServer() {
 
@@ -31,14 +27,14 @@ String setupServer() {
   ipAddress = WiFi.localIP();
   Serial.println(ipAddress);
   server.on("/", handle_OnConnect);
-  server.on("/inside_led_1_on", HTTP_POST, handleInsideLed1On);
-  server.on("/inside_led_1_off", HTTP_POST, handleInsideLed1Off);
-  server.on("/inside_led_2_on", HTTP_POST, handleInsideLed2On);
-  server.on("/inside_led_2_off", HTTP_POST, handleInsideLed2Off);
-  server.on("/outside_led_on", HTTP_POST, handleOutsideLedOn);
-  server.on("/outside_led_off", HTTP_POST, handleOutsideLedOff);
-  server.on("/set-heater", HTTP_POST, handleSetHeater);
-  server.on("/get_temp_humidity", HTTP_GET, getTempHumidity);
+  server.on("/inside-lights-1-on", HTTP_POST, handleInsideLed1On);
+  server.on("/inside-lights-1-off", HTTP_POST, handleInsideLed1Off);
+  server.on("/inside-lights-2-on", HTTP_POST, handleInsideLed2On);
+  server.on("/inside-lights-2-off", HTTP_POST, handleInsideLed2Off);
+  server.on("/outside-lights-on", HTTP_POST, handleOutsideLedOn);
+  server.on("/outside-lights-off", HTTP_POST, handleOutsideLedOff);
+  server.on("/save-temp", HTTP_POST, handleSetHeater);
+  server.on("/get-temp-humidity", HTTP_GET, getTempHumidity);
   server.onNotFound(handle_NotFound);
 
   server.begin();
@@ -58,29 +54,50 @@ void handle_OnConnect() {
 
 void handleInsideLed1On() {
   Serial.println("Inside LED's #1 on");
+  //switch the pin extender to pin 1
+  setMuxOutputPin(0, HIGH);
+  //turn the relay on by sending it high
+  //toggleRelayPin(1, HIGH);
   server.send(200, "text/html", "on");
 }
 
 void handleInsideLed1Off() {
   Serial.println("Inside LED's #1 off!");
+  setMuxOutputPin(0, LOW);
+  //turn the relay off by switching to low
+ //toggleRelayPin(1, LOW);
   server.send(200, "text/html", "off");
 }
 void handleInsideLed2On() {
   Serial.println("Inside LED's #2 on!");
+  //switch the pin extender to pin 1
+  setMuxOutputPin(1, HIGH);
+  //turn the relay on by sending it high
+  //toggleRelayPin(4, HIGH);
   server.send(200, "text/html", "on");
 }
 
 void handleInsideLed2Off() {
   Serial.println("Inside LED's #2 off!");
+  setMuxOutputPin(1, LOW);
+  //turn the relay off by switching to low
+ // toggleRelayPin(4, LOW);
   server.send(200, "text/html", "off");
 }
 void handleOutsideLedOn() {
   Serial.println("Outside LED's on!");
+  //switch the pin extender to pin 1
+  setMuxOutputPin(2, HIGH);
+  //turn the relay on by sending it high
+  //toggleRelayPin(2, HIGH);
   server.send(200, "text/html", "on");
 }
 
 void handleOutsideLedOff() {
   Serial.println("Outside LED off!");
+  setMuxOutputPin(2, HIGH);
+  //turn the relay off by switching to low
+  //toggleRelayPin(4, LOW);
   server.send(200, "text/html", "off");
 }
 
@@ -153,7 +170,7 @@ String getHTML() {
   ptr += "<button id='inside-lights-1-on' type='button' class='inactiveButton' >On</button>";
   ptr += "<button id='inside-lights-1-off' type='button' class='activeButton' >Off</button>";
   ptr += "</li>\n";
-  ptr += "<li>Inside lights #1";
+  ptr += "<li>Inside lights #2";
   ptr += "<button id='inside-lights-2-on' type='button' class='inactiveButton' >On</button>";
   ptr += "<button id='inside-lights-2-off' type='button' class='activeButton' >Off</button>";
   ptr += "</li>\n";
@@ -165,32 +182,34 @@ String getHTML() {
   ptr += "<ul>";
   ptr += "<li><label for='heater-temp'>Ideal temp</label>&nbsp;";
   ptr += "<input id='heater-temp' type='number' min='20' max='60' value='25' /></li>";
-  ptr += "<li><button id='save-temps' type='button' class='activeButton' >Save temperature</button></li>";
+  ptr += "<li><button id='save-temp' type='button' class='activeButton' >Save temperature</button></li>";
   ptr += "</ul>";
   ptr += "</form>\n";
   ptr += "</body>\n";
   ptr += "<script>\n";
   ptr += "const lights = document.getElementById('lights');";
-  ptr += "const saveTemps = document.getElementById('save-temps');";
+  ptr += "const saveTemps = document.getElementById('save-temp');";
   ptr += "saveTemps.addEventListener('click', performButtonAction, false);";
   ptr += "lights.addEventListener('click', performButtonAction, false);";
   ptr += "function performButtonAction(event){\n";
   ptr += "const targetId = event.target.id;\n";
-  ptr += "let url = '" + ipAddress.toString() + "';\n";
-  ptr += "url += '/' + targetId;\n";
+  //ptr += "let url = '" + ipAddress.toString() + "';\n";
+  //ptr += "url += '/' + targetId;\n";
+  ptr += "let url = '/' + targetId;\n";
   ptr += "console.log(url);\n";
   ptr += "let myHeaders = new Headers();";
   ptr += "myHeaders.append('Content-Type', 'text/plain');\n";
   ptr += "let requestJson = { method: 'POST', headers: myHeaders};\n";
-  ptr += "if(targetId === 'save-temps'){\n";
+  ptr += "if(targetId === 'save-temp'){\n";
   ptr += "const heaterTemp = document.getElementById('heater-temp');\n";
   ptr += "requestJson = { method: 'POST', headers: myHeaders, body:{'foo': heaterTemp},};\n";
   ptr += "console.log('temp is ' + heaterTemp.value );\n";
   ptr += "console.log('code to execute save temps');\n";
   ptr += "} else{\n";
-  ptr += "console.log('code to turn lights on and off');\n";
+      //code to switch button colors
   ptr += "}\n";
   ptr += "const request = new Request(url, requestJson);\n";
+  ptr += "fetch(request).then((response) => {console.log('Request was great success');});\n";
   ptr += "}\n";//end of function
   ptr += "</script>\n";
   ptr += "</html>\n";

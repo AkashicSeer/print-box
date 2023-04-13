@@ -10,7 +10,7 @@ CD74HC4067 mux(S0_PIN, S1_PIN, S2_PIN, S3_PIN);
 //pins are from 0 to 15, highLow is whether to set the pin to either HIGH or LOW
 void setMuxOutputPin(int pinNumber, int highLow) {
   pinMode(SIG_PIN, OUTPUT);
-  Serial.println("Setting pin " + String(pinNumber) + " to " + String(highLow));
+  Serial.println("Setting pin extender pin " + String(pinNumber) + " to " + String(highLow));
   mux.channel(pinNumber);
   digitalWrite(pinNumber, highLow);
 }
